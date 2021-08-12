@@ -1,0 +1,12 @@
+<config>
+    <file
+            source_path="C:\Work"
+            destination_path="C:\Work\test"
+            file_name="nums.txt"
+    />
+    <file
+            source_path="C:\Work"
+            destination_path="C:\Work\test"
+            file_name="nums2.txt"
+    />
+</config>
