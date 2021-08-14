@@ -1,16 +1,38 @@
 import os
+from abc import ABC, abstractmethod
 from datetime import datetime
 from random import choice
 
 import psutil
 
 
-class ListFilesTestCase:
+class TestCase(ABC):
+    def __init__(self, tc_id, name):
+        self.tc_id = tc_id
+        self.name = name
+
+    @abstractmethod
+    def _prep(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _run(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _clean_up(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def execute(self):
+        raise NotImplementedError
+
+
+class ListFilesTestCase(TestCase):
     UNIX_TIME = datetime(1970, 1, 1)
 
     def __init__(self):
-        self.tc_id = 'tc01'
-        self.name = 'list_files'
+        super().__init__(tc_id='tc01', name='list_files')
         self._seconds_from_unix = -1
 
     def __repr__(self):
@@ -22,27 +44,25 @@ class ListFilesTestCase:
         return self.seconds_from_unix % 2 == 0
 
     def _run(self):
-        can_list_files = self._prep()
-        if can_list_files:
-            home_directory = os.path.expanduser('~')
-            for file in os.listdir(home_directory):
-                print(file)
+        home_directory = os.path.expanduser('~')
+        for file in os.listdir(home_directory):
+            print(file)
+
+    def _clean_up(self):
+        pass
+
+    def execute(self):
+        if self._prep():
+            self._run()
+            self._clean_up()
         else:
             print(
                 f"Couldn't list files since {self.seconds_from_unix} which is the number of seconds from the "
                 f"beginning of the Unix epoch is not divisible by 2"
             )
 
-    def _clean_up(self):
-        pass
 
-    def execute(self):
-        self._prep()
-        self._run()
-        self._clean_up()
-
-
-class RandomFileTestCase:
+class RandomFileTestCase(TestCase):
     BYTES_TO_KB = pow(10, -9)  # 0.000_000_001
     MIN_REQUIRED_RAM = 1  # in GB
     FILE_SIZE = 10241000  # in bytes
@@ -50,8 +70,7 @@ class RandomFileTestCase:
     FILE_CONTENT_JOINER = ''
 
     def __init__(self):
-        self.tc_id = 'tc02'
-        self.name = 'random_file'
+        super().__init__(tc_id='tc02', name='random_file')
         self._file = 'test.txt'
 
     def __repr__(self):
