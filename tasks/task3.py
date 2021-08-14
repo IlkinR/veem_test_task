@@ -6,10 +6,30 @@ from random import choice
 import psutil
 
 
+class SecondsSinceUnixNotEven(Exception):
+    def __init__(self, passed_seconds):
+        self.passed_seconds = passed_seconds
+
+    def __repr__(self):
+        return '{exp}: {seconds} % 2 == 0, since remainder is {remainder}'.format(
+            exp=self.__class__.__name__,
+            seconds=self.passed_seconds,
+            remainder=self.passed_seconds % 2
+        )
+
+
 class TestCase(ABC):
     def __init__(self, tc_id, name):
-        self.tc_id = tc_id
-        self.name = name
+        self._tc_id = tc_id
+        self._name = name
+
+    @property
+    def tc_id(self):
+        return self._tc_id
+
+    @property
+    def name(self):
+        return self._name
 
     @abstractmethod
     def _prep(self):
@@ -40,8 +60,9 @@ class ListFilesTestCase(TestCase):
 
     def _prep(self):
         passed_time = datetime.utcnow() - self.UNIX_TIME
-        self.seconds_from_unix = int(passed_time.total_seconds())
-        return self.seconds_from_unix % 2 == 0
+        seconds_from_unix = int(passed_time.total_seconds())
+        self.seconds_from_unix = seconds_from_unix
+        return seconds_from_unix % 2 == 0
 
     def _run(self):
         home_directory = os.path.expanduser('~')
@@ -56,10 +77,7 @@ class ListFilesTestCase(TestCase):
             self._run()
             self._clean_up()
         else:
-            print(
-                f"Couldn't list files since {self.seconds_from_unix} which is the number of seconds from the "
-                f"beginning of the Unix epoch is not divisible by 2"
-            )
+            raise SecondsSinceUnixNotEven(self.seconds_from_unix)
 
 
 class RandomFileTestCase(TestCase):
@@ -118,9 +136,15 @@ class TestSuite:
 
     def run_cases(self):
         for test_case in self._test_cases:
-            print(f'{test_case} case is running...')
-            test_case.execute()
-            print(f'Execution of {test_case} passed successfully')
+            try:
+                print(f'{test_case} case is running...')
+                test_case.execute()
+                print(f'Execution of {test_case} passed successfully')
+
+            except SecondsSinceUnixNotEven as se:
+                print(f'{test_case} is failed!')
+                print(repr(se))
+
             print('-' * 60)
 
 
