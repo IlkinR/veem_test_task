@@ -9,10 +9,10 @@ import psutil
 class SecondsSinceUnixNotEven(Exception):
     """ Exception class for handling errors related to total seconds passed since unix time (January 01 1970)."""
 
-    def __init__(self, passed_seconds):
+    def __init__(self, passed_seconds: int) -> None:
         self.passed_seconds = passed_seconds
 
-    def __repr__(self):
+    def __repr__(self) -> repr:
         return '{exception}: {seconds} % 2 == 0, since remainder is {remainder}'.format(
             exception=self.__class__.__name__,
             seconds=self.passed_seconds,
@@ -23,10 +23,10 @@ class SecondsSinceUnixNotEven(Exception):
 class SystemRAMLessThanOneGB(Exception):
     """ Exception class for handling errors related to RAM of system of the user """
 
-    def __init__(self, system_ram):
+    def __init__(self, system_ram: int) -> None:
         self.system_ram = system_ram
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '{exception}: {seconds} Gb < 1 Gb '.format(
             exception=self.__class__.__name__,
             seconds=self.system_ram,
@@ -36,16 +36,16 @@ class SystemRAMLessThanOneGB(Exception):
 class TestCase(ABC):
     """ An interface for all test cases"""
 
-    def __init__(self, tc_id, name):
+    def __init__(self, tc_id: str, name: str):
         self._tc_id = tc_id
         self._name = name
 
     @property
-    def tc_id(self):
+    def tc_id(self) -> str:
         return self._tc_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @abstractmethod
@@ -75,17 +75,17 @@ class ListFilesTestCase(TestCase):
         super().__init__(tc_id='tc01', name='list_files')
         self._seconds_from_unix = -1
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.tc_id} {self.name}'
 
-    def _prep(self):
+    def _prep(self) -> bool:
         """ Checks if seconds from unix time is even. ALso assign the value for seconds_from_unix attribute """
         passed_time = datetime.utcnow() - self.UNIX_TIME
         seconds_from_unix = int(passed_time.total_seconds())
         self.seconds_from_unix = seconds_from_unix
         return seconds_from_unix % 2 == 0
 
-    def _run(self):
+    def _run(self) -> None:
         """ Print all files to terminal is home directory of the user """
         home_directory = os.path.expanduser('~')
         all_files = os.listdir(home_directory)
@@ -95,7 +95,7 @@ class ListFilesTestCase(TestCase):
     def _clean_up(self):
         pass
 
-    def execute(self):
+    def execute(self) -> None:
         """ Executes test case """
         if not self._prep():
             raise SecondsSinceUnixNotEven(self.seconds_from_unix)
@@ -117,31 +117,31 @@ class RandomFileTestCase(TestCase):
         self._file = 'test.txt'
         self._system_ram = -1
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.tc_id} {self.name}'
 
-    def _prep(self):
+    def _prep(self) -> bool:
         """ Checks if system ram is greater than 1 Gb"""
         memory_info = psutil.virtual_memory()
         ram = memory_info.total * self.BYTES_TO_KB
         self._system_ram = ram
         return int(ram) > self.MIN_REQUIRED_RAM
 
-    def _run(self):
+    def _run(self) -> None:
         """ Creates files with random content """
         content_symbols = [choice(self.FILE_CONTENT) for _ in range(self.FILE_SIZE)]
         content = self.FILE_CONTENT_JOINER.join(content_symbols)
         with open(self._file, 'w') as file:
             file.write(content)
 
-    def _clean_up(self):
+    def _clean_up(self) -> None:
         """ Deletes file from system """
         file_path = os.path.join(self._file)
         file_full_path = os.path.abspath(file_path)
         if os.path.isfile(file_full_path):
             os.remove(file_full_path)
 
-    def execute(self):
+    def execute(self) -> None:
         """ Executes test cases """
         if not self._prep():
             raise SystemRAMLessThanOneGB(self._system_ram)
@@ -156,28 +156,26 @@ class RandomFileTestCase(TestCase):
 class TestSuite:
     """ Our testing system. It accepts the test cases implementing TestCase interface and runs them one by one """
 
-    def __init__(self, test_cases=None):
+    def __init__(self, test_cases: List[TestCase] = None):
         if test_cases is None:
             self._test_cases = []
         self._test_cases = test_cases
 
-    def __getitem__(self, position):
+    def __getitem__(self, position: int) -> TestCase:
         return self._test_cases[position]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._test_cases)
 
-    def add_test_case(self, test_case):
+    def add_test_case(self, test_case: TestCase) -> None:
         """ Add a test case """
-        TestSuite.__TOTAL_TEST_CASES += 1
         self._test_cases.append(test_case)
 
-    def add_test_cases(self, test_cases):
+    def add_test_cases(self, test_cases: List[TestCase]) -> None:
         """ Add several test cases """
-        TestSuite.__TOTAL_TEST_CASES += len(test_cases)
         self._test_cases.extend(test_cases)
 
-    def run_cases(self):
+    def run_cases(self) -> None:
         """ Runs our testing system containing multiple test cases """
         for test_case in self._test_cases:
             try:
