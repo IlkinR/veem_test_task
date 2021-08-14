@@ -156,18 +156,10 @@ class RandomFileTestCase(TestCase):
 class TestSuite:
     """ Our testing system. It accepts the test cases implementing TestCase interface and runs them one by one """
 
-    __TOTAL_TEST_CASES = 0
-
     def __init__(self, test_cases=None):
         if test_cases is None:
             self._test_cases = []
-
-        self.__TOTAL_TEST_CASES += len(test_cases)
         self._test_cases = test_cases
-
-    @property
-    def test_cases_count(self):
-        return self.__TOTAL_TEST_CASES
 
     def __getitem__(self, position):
         return self._test_cases[position]
@@ -186,7 +178,7 @@ class TestSuite:
         self._test_cases.extend(test_cases)
 
     def run_cases(self):
-        """ Runs our system containing multiple test cases """
+        """ Runs our testing system containing multiple test cases """
         for test_case in self._test_cases:
             try:
                 print(f'{test_case} case is running...')
@@ -200,8 +192,6 @@ class TestSuite:
 
 if __name__ == '__main__':
     suite = TestSuite([ListFilesTestCase(), RandomFileTestCase()])
-    # suite.add_test_cases([ListFilesTestCase(), RandomFileTestCase()])
-    # suite.run_cases()
     print(suite.test_cases_count)
     print(len(suite))
     print(suite[0])
