@@ -11,21 +11,10 @@ class SecondsSinceUnixNotEven(Exception):
         self.passed_seconds = passed_seconds
 
     def __repr__(self):
-        return '{exception}: {seconds} % 2 == 0, since remainder is {remainder}'.format(
-            exception=self.__class__.__name__,
+        return '{exp}: {seconds} % 2 == 0, since remainder is {remainder}'.format(
+            exp=self.__class__.__name__,
             seconds=self.passed_seconds,
             remainder=self.passed_seconds % 2
-        )
-
-
-class SystemRAMLessThanOneGB(Exception):
-    def __init__(self, system_ram):
-        self.system_ram = system_ram
-
-    def __repr__(self):
-        return '{exception}: {seconds} Gb < 1 Gb '.format(
-            exception=self.__class__.__name__,
-            seconds=self.system_ram,
         )
 
 
@@ -84,11 +73,11 @@ class ListFilesTestCase(TestCase):
         pass
 
     def execute(self):
-        if not self._prep():
+        if self._prep():
+            self._run()
+            self._clean_up()
+        else:
             raise SecondsSinceUnixNotEven(self.seconds_from_unix)
-
-        self._run()
-        self._clean_up()
 
 
 class RandomFileTestCase(TestCase):
@@ -101,7 +90,6 @@ class RandomFileTestCase(TestCase):
     def __init__(self):
         super().__init__(tc_id='tc02', name='random_file')
         self._file = 'test.txt'
-        self._system_ram = -1
 
     def __repr__(self):
         return f'{self.tc_id} {self.name}'
@@ -109,7 +97,6 @@ class RandomFileTestCase(TestCase):
     def _prep(self):
         memory_info = psutil.virtual_memory()
         ram = memory_info.total * self.BYTES_TO_KB
-        self._system_ram = ram
         return int(ram) > self.MIN_REQUIRED_RAM
 
     def _run(self):
@@ -125,21 +112,28 @@ class RandomFileTestCase(TestCase):
             os.remove(file_full_path)
 
     def execute(self):
-        if not self._prep():
-            raise SystemRAMLessThanOneGB(self._system_ram)
-
-        print('test.txt file is creating...')
-        self._run()
-        print('test.txt file is created')
-
-        print('test.txt file is deleting...')
-        self._clean_up()
-        print('test.txt file is deleted successfully!')
+        if self._prep():
+            print('test.txt file is creating...')
+            self._run()
+            print('test.txt file is created')
+            print('test.txt file is deleting...')
+            self._clean_up()
+            print('test.txt file is deleted successfully!')
+        else:
+            print('System RAM is less than 1 GB')
 
 
 class TestSuite:
-    def __init__(self):
-        self._test_cases = []
+    def __init__(self, test_cases=None):
+        if test_cases is None:
+            self._test_cases = []
+        self._test_cases = test_cases
+
+    def __len__(self):
+        return len(self._test_cases)
+
+    def __getitem__(self, position):
+        return self._test_cases[position]
 
     def add_test_case(self, test_case):
         self._test_cases.append(test_case)
@@ -153,17 +147,13 @@ class TestSuite:
                 print(f'{test_case} case is running...')
                 test_case.execute()
                 print(f'Execution of {test_case} passed successfully')
-
-            except (SecondsSinceUnixNotEven, SystemRAMLessThanOneGB) as se:
+            except SecondsSinceUnixNotEven as se:
                 print(f'{test_case} is failed!')
                 print(repr(se))
             print('-' * 60)
 
 
 if __name__ == '__main__':
-    suite = TestSuite()
-    suite.add_test_cases([
-        ListFilesTestCase(),
-        RandomFileTestCase(),
-    ])
+    suite = TestSuite([ListFilesTestCase(), RandomFileTestCase()])
+    # suite.add_test_cases([ListFilesTestCase(), RandomFileTestCase()])
     suite.run_cases()
