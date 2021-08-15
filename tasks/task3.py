@@ -34,7 +34,7 @@ class SystemRAMLessThanOneGB(Exception):
 
 
 class TestCase(ABC):
-    """ An interface for all test cases"""
+    """ An interface for all test cases """
 
     def __init__(self, tc_id: str, name: str):
         self._tc_id = tc_id
@@ -66,7 +66,7 @@ class TestCase(ABC):
 
 
 class ListFilesTestCase(TestCase):
-    """ Test case responsible for listing files in the user home directory if the number of seconds passed from unix
+    """ Test case responsible for listing files in the user home directory. Runs if the number of seconds passed from unix
     time is even """
 
     UNIX_TIME = datetime(1970, 1, 1)
@@ -79,14 +79,14 @@ class ListFilesTestCase(TestCase):
         return f'{self.tc_id} {self.name}'
 
     def _prep(self) -> bool:
-        """ Checks if seconds from unix time is even. ALso assign the value for seconds_from_unix attribute """
+        """ Checks if seconds from unix time is even or odd """
         passed_time = datetime.utcnow() - self.UNIX_TIME
         seconds_from_unix = int(passed_time.total_seconds())
         self.seconds_from_unix = seconds_from_unix
         return seconds_from_unix % 2 == 0
 
     def _run(self) -> None:
-        """ Print all files to terminal is home directory of the user """
+        """ Print all files to terminal in user home directory"""
         home_directory = os.path.expanduser('~')
         all_files = os.listdir(home_directory)
         for file in all_files:
@@ -128,7 +128,7 @@ class RandomFileTestCase(TestCase):
         return int(ram) > self.MIN_REQUIRED_RAM
 
     def _run(self) -> None:
-        """ Creates files with random content """
+        """ Creates a file with random content """
         content_symbols = [choice(self.FILE_CONTENT) for _ in range(self.FILE_SIZE)]
         content = self.FILE_CONTENT_JOINER.join(content_symbols)
         with open(self._file, 'w') as file:
@@ -168,15 +168,15 @@ class TestSuite:
         return len(self._test_cases)
 
     def add_test_case(self, test_case: TestCase) -> None:
-        """ Add a test case """
+        """ Add a test case to the testing system """
         self._test_cases.append(test_case)
 
     def add_test_cases(self, test_cases: List[TestCase]) -> None:
-        """ Add several test cases """
+        """ Add several test cases to the testing system """
         self._test_cases.extend(test_cases)
 
     def run_cases(self) -> None:
-        """ Runs our testing system containing multiple test cases """
+        """ Runs testing system containing multiple test cases """
         for test_case in self._test_cases:
             try:
                 print(f'{test_case} case is running...')
@@ -189,7 +189,7 @@ class TestSuite:
 
 
 if __name__ == '__main__':
-    suite = TestSuite([ListFilesTestCase(), RandomFileTestCase()])
-    print(suite.test_cases_count)
-    print(len(suite))
-    print(suite[0])
+    suite = TestSuite()
+    suite.add_test_case(ListFilesTestCase())
+    suite.add_test_case(RandomFileTestCase())
+    suite.run_cases()
