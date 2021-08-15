@@ -4,11 +4,15 @@ import sys
 
 
 class InvalidInputFormat(Exception):
+    """ Exception class for handling user input in terminal"""
+
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
 def check_has_sums(dir_file: str, input_file: str):
+    """ Reads a file and checks hash sums """
+
     with open(input_file, 'r') as file:
         for line in file:
             bin_file, algorithm, hashcode = line.split()
